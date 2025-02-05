@@ -10,6 +10,12 @@ This repository provides an implementation of *MONET* based on the original code
 
 MONET is designed to improve multimedia recommendation by leveraging modality-embracing graph convolutional networks and target-aware attention mechanisms.
 
+### Authors of Reproduc-MONET
+
+- Beni Ifland  ([ifliandb@post.bgu.ac.il](mailto\:ifliandb@post.bgu.ac.il))
+- Bar Lazar Dolev ([dobar@post.bgu.ac.il](mailto\:dobar@post.bgu.ac.il))
+- Hila Zylfi ([hilakese@post.bgu.ac.il](mailto\:hilakese@post.bgu.ac.il))
+  
 ### Authors of the Original Paper
 
 - Yungi Kim ([gozj3319@hanyang.ac.kr](mailto\:gozj3319@hanyang.ac.kr))
