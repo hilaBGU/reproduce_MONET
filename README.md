@@ -1,4 +1,4 @@
-# Reproduc-MONET: Reproducing Results for Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation
+# Reproduced-MONET: Reproducing Results for Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation
 
 This repository provides an implementation of *MONET* based on the original code, aiming to reproduce the results presented in the following paper:
 
@@ -10,7 +10,7 @@ This repository provides an implementation of *MONET* based on the original code
 
 MONET is designed to improve multimedia recommendation by leveraging modality-embracing graph convolutional networks and target-aware attention mechanisms.
 
-### Authors of Reproduc-MONET
+### Authors of Reproduced-MONET
 
 - Beni Ifland  ([ifliandb@post.bgu.ac.il](mailto\:ifliandb@post.bgu.ac.il))
 - Bar Lazar Dolev ([dobar@post.bgu.ac.il](mailto\:dobar@post.bgu.ac.il))
