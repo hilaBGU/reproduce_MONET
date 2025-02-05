@@ -123,6 +123,11 @@ else:
             yield json.dumps(eval(line))
 
     print("----------parse metadata----------")
+    meta_data_dir = os.path.join(folder, "meta-data")
+    if not os.path.exists(meta_data_dir):
+        os.makedirs(meta_data_dir, exist_ok=True)
+
+    meta_json_path = os.path.join(meta_data_dir, "meta.json")
     if not os.path.exists(folder + "meta-data/meta.json"):
         with open(folder + "meta-data/meta.json", "w") as f:
             for line in parse(folder + "meta-data/" + "meta_%s.json.gz" % (name)):

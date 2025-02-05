@@ -2,6 +2,7 @@ import math
 import random
 import sys
 from time import time
+import os
 
 import numpy as np
 import torch
@@ -59,6 +60,7 @@ class Trainer(object):
         )
 
         self.model = self.model.cuda()
+        print("Model is on GPU:", next(self.model.parameters()).is_cuda)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.lr_scheduler = self.set_lr_scheduler()
 
@@ -93,6 +95,7 @@ class Trainer(object):
             .to_dense()
             .cuda()
         )
+        print("Model is on GPU:", next(self.model.parameters()).is_cuda)
         stopping_step = 0
 
         n_batch = data_generator.n_train // args.batch_size + 1
@@ -178,10 +181,16 @@ class Trainer(object):
             if ret["recall"][1] > best_recall:
                 best_recall = ret["recall"][1]
                 stopping_step = 0
-                torch.save(
-                    {self.model_name: self.model.state_dict()},
-                    "./models/" + self.dataset + "_" + self.model_name,
-                )
+
+                model_dir = "./models"
+                model_path = os.path.join(model_dir, f"{self.dataset}_{self.model_name}")
+
+                try:
+                    torch.save({self.model_name: self.model.state_dict()}, model_path)
+                except FileNotFoundError:
+                    os.makedirs(model_dir, exist_ok=True)
+                    torch.save({self.model_name: self.model.state_dict()}, model_path)
+
             elif stopping_step < args.early_stopping_patience:
                 stopping_step += 1
                 print("#####Early stopping steps: %d #####" % stopping_step)
@@ -213,6 +222,7 @@ class Trainer(object):
             )[self.model_name]
         )
         self.model.cuda()
+        print("Model is on GPU:", next(self.model.parameters()).is_cuda)
         test_ret = self.test(users_to_test, is_val=False)
         print("Final ", test_ret)
 

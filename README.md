@@ -1,75 +1,99 @@
-# MONET: Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation
-This repository provides a reference implementation of *MONET* as described in the following paper:
-> MONET: Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation<br>
-> Yungi Kim, Taeri Kim, Won-Yong Shin and Sang-Wook Kim<br>
-> 17th ACM Int'l Conf. on Web Search and Data Mining (ACM WSDM 2024)<br>
+# MONET: Reproducing Results for Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation
+
+This repository provides an implementation of *MONET* based on the original code, aiming to reproduce the results presented in the following paper:
+
+> MONET: Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation\
+> Yungi Kim, Taeri Kim, Won-Yong Shin, and Sang-Wook Kim\
+> 17th ACM International Conference on Web Search and Data Mining (ACM WSDM 2024)
 
 ### Overview of MONET
-![monet](https://github.com/Kimyungi/MONET/assets/28508383/6723ccd1-8a8e-4710-ba7b-6a7bee928301)
+
+MONET is designed to improve multimedia recommendation by leveraging modality-embracing graph convolutional networks and target-aware attention mechanisms.
+
+### Authors of the Original Paper
+
+- Yungi Kim ([gozj3319@hanyang.ac.kr](mailto\:gozj3319@hanyang.ac.kr))
+- Taeri Kim ([taerik@hanyang.ac.kr](mailto\:taerik@hanyang.ac.kr))
+- Won-Yong Shin ([wy.shin@yonsei.ac.kr](mailto\:wy.shin@yonsei.ac.kr))
+- Sang-Wook Kim ([wook@hanyang.ac.kr](mailto\:wook@hanyang.ac.kr))
 
 
-### Authors
-- Yungi Kim (gozj3319@hanyang.ac.kr)
-- Taeri Kim (taerik@hanyang.ac.kr)
-- Won-Yong Shin (wy.shin@yonsei.ac.kr)
-- Sang-Wook Kim (wook@hanyang.ac.kr)
+### Environment Setup
 
-### Requirements
-The code has been tested running under Python 3.6.13. The required packages are as follows:
-- ```gensim==3.8.3```
-- ```pytorch==1.10.2+cu113```
-- ```torch_geometric==2.0.3```
-- ```sentence_transformers==2.2.0```
-- ```pandas```
-- ```numpy```
-- ```tqdm```
-- ```torch-scatter```
-- ```torch-sparse```
-- ```torch-cluster```
-- ```torch-spline-conv```
-- ```torch-geometric```
+To successfully reproduce the results, we used the following environment setup as some package versions differ from the original implementation:
+
+```bash
+conda create -n reproduce_monet python=3.8
+conda install pytorch==1.10.1 torchvision==0.11.2 torchaudio==0.10.1 cudatoolkit=11.3 -c pytorch -c conda-forge
+pip install gensim==3.8.3
+pip install sentence-transformers==2.2.0
+pip install --no-index torch-scatter -f https://pytorch-geometric.com/whl/torch-1.10.1+cu113.html
+pip install --no-index torch-sparse -f https://pytorch-geometric.com/whl/torch-1.10.1+cu113.html
+pip install --no-index torch-cluster -f https://pytorch-geometric.com/whl/torch-1.10.1+cu113.html
+pip install --no-index torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.10.1+cu113.html
+python -m pip install torch_geometric==2.2.0
+pip install huggingface_hub==0.8.1
+pip install transformers==4.21.0
+```
 
 ### Dataset Preparation
-#### Dataset Download
-*Men Clothing and Women Clothing*: Download Amazon product dataset provided by [MAML](https://github.com/liufancs/MAML). Put data folder into the directory data/.
 
-*Beauty and Toys & Games*: Download 5-core reviews data, meta data, and image features from [Amazon product dataset](http://jmcauley.ucsd.edu/data/amazon/links.html). Put data into the directory data/{folder}/meta-data/.
+#### Dataset Download
+
+- **Men Clothing and Women Clothing**: Download from the Amazon product dataset provided by [MAML](https://github.com/liufancs/MAML). Place the data folder in `data/`.
 
 #### Dataset Preprocessing
-Run ```python build_data.py --name={Dataset}```
+
+Run the following command:
+
+```bash
+python build_data.py --name={Dataset}
+```
 
 ### Usage
-#### For simplicity, we provide usage for the Women Clothing dataset.
-------------------------------------
-- For MONET in RQ1,
-```
+
+We conducted experiments specifically for **RQ1**.
+
+#### Example: Women Clothing Dataset
+
+- **For MONET in RQ1:**
+
+```bash
 python main.py --agg=concat --n_layers=2 --alpha=1.0 --beta=0.3 --dataset=WomenClothing --model_name=MONET_2_10_3
 ```
-------------------------------------
-- For RQ2, refer the second cell in "Preliminaries.ipynb".
-------------------------------------
-- For MONET_w/o_MeGCN and MONET_w/o_TA in RQ3,
-```
-python main.py --agg=concat --n_layers=0 --alpha=1.0 --beta=0.3 --dataset=WomenClothing --model_name=MONET_wo_MeGCN
-python main.py --target_aware --agg=concat --n_layers=2 --alpha=1.0 --beta=0.3 --dataset=WomenClothing --model_name=MONET_wo_TA
-```
-------------------------------------
-- For RQ4 (hyperparameters $\alpha$, $\beta$ sensitivity),
-```
-python main.py --agg=concat --n_layers=2 --alpha={value} --beta=0.3 --dataset=WomenClothing --model_name=MONET_2_{alpha}_3
-python main.py --agg=concat --n_layers=2 --alpha=1.0 --beta={value} --dataset=WomenClothing --model_name=MONET_2_10_{beta}
-```
 
-### Cite
-We encourage you to cite our paper if you have used the code in your work. You can use the following BibTex citation:
-```
+### Reproduced Results
+
+We conducted experiments for RQ1 on the Women Clothing and Men Clothing datasets. The reproduced results are as follows:
+
+#### Women Clothing
+
+- **Precision\@20:** 0.00666 (original: 0.0050)
+- **Recall\@20:** 0.0962 (original: 0.0990)
+- **NDCG\@20:** 0.0439 (original: 0.0450)
+
+#### Men Clothing
+
+- **Precision\@20:** 0.00646 (original: 0.0045)
+- **Recall\@20:** 0.0927 (original: 0.0895)
+- **NDCG\@20:** 0.0403 (original: 0.0406)
+
+While our results are close to the original publication, minor differences may be due to variations in preprocessing, random seeds, or hardware environments.
+
+### Cite the Original Work
+
+If you use this code, please cite the original paper:
+
+```bibtex
 @inproceedings{kim24wsdm,
   author   = {Yungi Kim and Taeri Kim and Won{-}Yong Shin and Sang{-}Wook Kim},
-  title     = {MONET: Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation},
-  booktitle = {ACM International Conference on Web Search and Data Mining (ACM WSDM 2024)},      
-  year      = {2024}
+  title    = {MONET: Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation},
+  booktitle = {ACM International Conference on Web Search and Data Mining (ACM WSDM 2024)},
+  year     = {2024}
 }
 ```
 
 ### Acknowledgement
-The structure of this code is largely based on [LATTICE](https://github.com/CRIPAC-DIG/LATTICE). Thank for their work.
+
+This project is based on the original MONET codebase, with structural influences from [LATTICE](https://github.com/CRIPAC-DIG/LATTICE). We thank the authors for their contributions.
+
