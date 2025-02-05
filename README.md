@@ -1,4 +1,4 @@
-# MONET: Reproducing Results for Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation
+# Reproduc-MONET: Reproducing Results for Modality-Embracing Graph Convolutional Network and Target-Aware Attention for Multimedia Recommendation
 
 This repository provides an implementation of *MONET* based on the original code, aiming to reproduce the results presented in the following paper:
 
