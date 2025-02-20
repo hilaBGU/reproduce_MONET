@@ -77,6 +77,8 @@ class MeGCN(nn.Module):
         cf,
         cf_gcn,
         lightgcn,
+        gamma,
+        delta,
     ):
         super(MeGCN, self).__init__()
         self.n_users = n_users
@@ -86,6 +88,8 @@ class MeGCN(nn.Module):
         self.feat_embed_dim = feat_embed_dim
         self.nonzero_idx = torch.tensor(nonzero_idx).cuda().long().T
         self.alpha = alpha
+        self.gamma = gamma
+        self.delta = delta
         self.agg = agg
         self.cf = cf
         self.cf_gcn = cf_gcn
@@ -144,6 +148,8 @@ class MeGCN(nn.Module):
         if self.has_norm:
             image_emb = F.normalize(image_emb)
             text_emb = F.normalize(text_emb)
+
+
         image_preference = self.image_preference.weight
         text_preference = self.text_preference.weight
 
@@ -219,6 +225,10 @@ class MeGCN(nn.Module):
 
         if _eval:
             return ego_image_emb, ego_text_emb
+
+        ### OUR CODE ###
+        final_image_emb = self.gamma * final_image_emb + (1 - self.gamma) * image_emb
+        final_text_emb = self.delta * final_text_emb + (1 - self.delta) * text_emb
 
         if not self.cf:
             if self.agg == "concat":
@@ -314,6 +324,10 @@ class MONET(nn.Module):
         cf,
         cf_gcn,
         lightgcn,
+        gamma,
+        delta,
+        omega,
+        user_transform,
     ):
         super(MONET, self).__init__()
         self.n_users = n_users
@@ -323,9 +337,15 @@ class MONET(nn.Module):
         self.nonzero_idx = nonzero_idx
         self.alpha = alpha
         self.beta = beta
+        self.gamma = gamma
+        self.delta = delta
+        self.omega = omega
+        self.user_transform = user_transform
         self.agg = agg
         self.image_feats = torch.tensor(image_feats, dtype=torch.float).cuda()
         self.text_feats = torch.tensor(text_feats, dtype=torch.float).cuda()
+
+
 
         self.megcn = MeGCN(
             self.n_users,
@@ -341,6 +361,8 @@ class MONET(nn.Module):
             cf,
             cf_gcn,
             lightgcn,
+            self.gamma,
+            self.delta,
         )
 
         nonzero_idx = torch.tensor(self.nonzero_idx).cuda().long().T
@@ -368,8 +390,12 @@ class MONET(nn.Module):
             return img, txt
 
         user, items = self.megcn(self.edge_index, self.edge_weight, _eval=False)
-
         return user, items
+
+        # Fusion: Combine original embeddings with MeGCN output
+        # fused_user = self.lambda_param * user + (1 - self.lambda_param) * self.image_feats
+        # fused_items = self.lambda_param * items + (1 - self.lambda_param) * self.text_feats
+
 
     def bpr_loss(self, user_emb, item_emb, users, pos_items, neg_items, target_aware):
         current_user_emb = user_emb[users]
@@ -378,17 +404,26 @@ class MONET(nn.Module):
 
         if target_aware:
             # target-aware
+
+            ### our code ###
+            user_projected = self.user_transform(current_user_emb)
+            adjusted_adj = self.adj[users, :] + user_projected  # (1024, 5028) + (1024, 5028)
+
+
+
+
+
             item_item = torch.mm(item_emb, item_emb.T)
             pos_item_query = item_item[pos_items, :]  # (batch_size, n_items)
             neg_item_query = item_item[neg_items, :]  # (batch_size, n_items)
             pos_target_user_alpha = torch.softmax(
-                torch.multiply(pos_item_query, self.adj[users, :]).masked_fill(
+                torch.multiply(pos_item_query,  self.omega * self.adj[users, :] + (1 - self.omega) * adjusted_adj).masked_fill( # our code, add current_user_embedding somehow to self.adj[users, :]
                     self.adj[users, :] == 0, -1e9
                 ),
                 dim=1,
             )  # (batch_size, n_items)
             neg_target_user_alpha = torch.softmax(
-                torch.multiply(neg_item_query, self.adj[users, :]).masked_fill(
+                torch.multiply(neg_item_query,  self.omega * self.adj[users, :] + (1 - self.omega) * adjusted_adj).masked_fill( # our code, add current_user_embedding somehow to self.adj[users, :]
                     self.adj[users, :] == 0, -1e9
                 ),
                 dim=1,
@@ -401,6 +436,13 @@ class MONET(nn.Module):
             )  # (batch_size, dim)
 
             # predictor
+
+
+            #### Note to self: the neg_target_user/pos_target_user is the attention based (dark purple in the right of the shekef)
+            #### Note to self: the current_user_emb is the user (light purple in the right of the shekef)
+            #### Note to self: the pos_item_emb/neg_item_emb is the current item (purple in the right of the shekef)
+
+
             pos_scores = (1 - self.beta) * torch.sum(
                 torch.mul(current_user_emb, pos_item_emb), dim=1
             ) + self.beta * torch.sum(torch.mul(pos_target_user, pos_item_emb), dim=1)

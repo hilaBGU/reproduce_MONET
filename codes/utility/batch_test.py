@@ -144,7 +144,7 @@ def test_torch(
 
     item_item = torch.mm(ia_embeddings, ia_embeddings.T)
 
-    for u_batch_id in tqdm(range(n_user_batchs), position=1, leave=False):
+    for u_batch_id in range(n_user_batchs):
         start = u_batch_id * u_batch_size
         end = (u_batch_id + 1) * u_batch_size
         user_batch = test_users[start:end]

@@ -3,7 +3,9 @@ import random
 import sys
 from time import time
 import os
-
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 import torch
 import torch.optim as optim
@@ -13,7 +15,7 @@ from utility.parser import parse_args
 
 
 class Trainer(object):
-    def __init__(self, data_config, args):
+    def __init__(self, data_config, args, use_alpha, use_beta, use_gamma, use_delta, use_omega):
         # argument settings
         self.n_users = data_config["n_users"]
         self.n_items = data_config["n_items"]
@@ -27,8 +29,29 @@ class Trainer(object):
         self.regs = eval(args.regs)
         self.decay = self.regs[0]
         self.lamb = self.regs[1]
-        self.alpha = args.alpha
-        self.beta = args.beta
+        self.alpha = args.alpha # 1.0
+        self.beta = args.beta # 0.3
+        self.gamma = 1.0
+        self.delta = 1.0
+        self.omega = 0.5
+
+        ### our code ###
+        if use_alpha:
+            self.alpha = nn.Parameter(torch.tensor(self.alpha))  # Learnable alpha
+        if use_beta:
+            self.beta = nn.Parameter(torch.tensor(self.beta))  # Learnable beta
+        if use_gamma:
+            self.gamma = nn.Parameter(torch.tensor(self.gamma))  # Learnable gamma
+        if use_delta:
+            self.delta = nn.Parameter(torch.tensor(self.delta))  # Learnable delta
+        if use_omega:
+            self.omega = nn.Parameter(torch.tensor(self.omega))  # Learnable omega
+
+
+        ### our code ###
+        self.user_transform = nn.Linear(128, 5028)  # to match the attention size with the user size 128->5028
+
+
         self.dataset = args.dataset
         self.model_name = args.model_name
         self.agg = args.agg
@@ -57,6 +80,10 @@ class Trainer(object):
             self.cf,
             self.cf_gcn,
             self.lightgcn,
+            self.gamma,
+            self.delta,
+            self.omega,
+            self.user_transform,
         )
 
         self.model = self.model.cuda()
@@ -107,6 +134,7 @@ class Trainer(object):
             for _ in range(n_batch):
                 self.model.train()
                 self.optimizer.zero_grad()
+
                 user_emb, item_emb = self.model()
                 users, pos_items, neg_items = data_generator.sample()
 
@@ -142,7 +170,7 @@ class Trainer(object):
                 emb_loss,
                 reg_loss,
             )
-            print(perf_str)
+            #print(perf_str)
 
             if epoch % args.verbose != 0:
                 continue
@@ -176,7 +204,7 @@ class Trainer(object):
                         ret["ndcg"][-1],
                     )
                 )
-                print(perf_str)
+                # print(perf_str)
 
             if ret["recall"][1] > best_recall:
                 best_recall = ret["recall"][1]
@@ -213,6 +241,10 @@ class Trainer(object):
             self.cf,
             self.cf_gcn,
             self.lightgcn,
+            self.gamma,
+            self.delta,
+            self.omega,
+            self.user_transform,
         )
 
         self.model.load_state_dict(
@@ -225,6 +257,11 @@ class Trainer(object):
         print("Model is on GPU:", next(self.model.parameters()).is_cuda)
         test_ret = self.test(users_to_test, is_val=False)
         print("Final ", test_ret)
+        print("Alpha value: ", self.alpha)
+        print("Beta value: ", self.beta)
+        print("Gamma value: ", self.gamma)
+        print("Delta value: ", self.delta)
+        print("Omega value: ", self.omega)
 
 
 def set_seed(seed):
@@ -235,15 +272,21 @@ def set_seed(seed):
 
 
 if __name__ == "__main__":
-    args = parse_args(True)
-    set_seed(args.seed)
+    for A in [False]:  # use alpha
+        for B in [False]:  # use beta
+            for C in [True, False]:  # use gamma
+                for D in [True, False]:  # use delta
+                    for E in [True, False]:  # use omega
+                        args = parse_args(True)
+                        set_seed(args.seed)
 
-    config = dict()
-    config["n_users"] = data_generator.n_users
-    config["n_items"] = data_generator.n_items
+                        config = dict()
+                        config["n_users"] = data_generator.n_users
+                        config["n_items"] = data_generator.n_items
 
-    nonzero_idx = data_generator.nonzero_idx()
-    config["nonzero_idx"] = nonzero_idx
+                        nonzero_idx = data_generator.nonzero_idx()
+                        config["nonzero_idx"] = nonzero_idx
 
-    trainer = Trainer(config, args)
-    trainer.train()
+                        print(f"Starting run with Alpha {A}, Beta {B}, Gamma {C}, Delta {D}")
+                        trainer = Trainer(config, args,A,B,C,D,E)
+                        trainer.train()
