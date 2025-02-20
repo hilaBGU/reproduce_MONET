@@ -15,7 +15,7 @@ from utility.parser import parse_args
 
 
 class Trainer(object):
-    def __init__(self, data_config, args, use_alpha, use_beta, use_gamma, use_delta, use_omega):
+    def __init__(self, data_config, args):
         # argument settings
         self.n_users = data_config["n_users"]
         self.n_items = data_config["n_items"]
@@ -33,19 +33,19 @@ class Trainer(object):
         self.beta = args.beta # 0.3
         self.gamma = 1.0
         self.delta = 1.0
-        self.omega = 0.5
+        self.omega = args.omega
 
         ### our code ###
-        if use_alpha:
+        if args.learn_alpha:
             self.alpha = nn.Parameter(torch.tensor(self.alpha))  # Learnable alpha
-        if use_beta:
+        if args.learn_beta:
             self.beta = nn.Parameter(torch.tensor(self.beta))  # Learnable beta
-        if use_gamma:
+        if args.learn_gamma:
             self.gamma = nn.Parameter(torch.tensor(self.gamma))  # Learnable gamma
-        if use_delta:
+        if args.learn_delta:
             self.delta = nn.Parameter(torch.tensor(self.delta))  # Learnable delta
-        if use_omega:
-            self.omega = nn.Parameter(torch.tensor(self.omega))  # Learnable omega
+        # if use_omega:
+        #     self.omega = nn.Parameter(torch.tensor(self.omega))  # Learnable omega
 
 
         ### our code ###
@@ -272,21 +272,17 @@ def set_seed(seed):
 
 
 if __name__ == "__main__":
-    for A in [False]:  # use alpha
-        for B in [False]:  # use beta
-            for C in [True, False]:  # use gamma
-                for D in [True, False]:  # use delta
-                    for E in [True, False]:  # use omega
-                        args = parse_args(True)
-                        set_seed(args.seed)
 
-                        config = dict()
-                        config["n_users"] = data_generator.n_users
-                        config["n_items"] = data_generator.n_items
+      args = parse_args(True)
+      set_seed(args.seed)
 
-                        nonzero_idx = data_generator.nonzero_idx()
-                        config["nonzero_idx"] = nonzero_idx
+      config = dict()
+      config["n_users"] = data_generator.n_users
+      config["n_items"] = data_generator.n_items
 
-                        print(f"Starting run with Alpha {A}, Beta {B}, Gamma {C}, Delta {D}")
-                        trainer = Trainer(config, args,A,B,C,D,E)
-                        trainer.train()
+      nonzero_idx = data_generator.nonzero_idx()
+      config["nonzero_idx"] = nonzero_idx
+
+      print(f"Starting run with Alpha {args.learn_alpha}, Beta {args.learn_beta}, Gamma {args.learn_gamma}, Delta {args.learn_delta}, Omega {args.omega}")
+      trainer = Trainer(config, args)
+      trainer.train()
