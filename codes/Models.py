@@ -407,7 +407,7 @@ class MONET(nn.Module):
 
             ### our code ###
             user_projected = self.user_transform(current_user_emb)
-            adjusted_adj = self.adj[users, :] + user_projected  # (1024, 5028) + (1024, 5028)
+            adjusted_adj = self.adj[users, :] + user_projected  # (1024, 5028) + (1024, 5028) for men and (1024, 14596) + (1024, 14596) for women
 
 
 
