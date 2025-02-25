@@ -15,7 +15,7 @@ from utility.parser import parse_args
 
 
 class Trainer(object):
-    def __init__(self, data_config, args, use_alpha, use_beta, use_gamma, use_delta, use_omega):
+    def __init__(self, data_config, args):
         # argument settings
         self.n_users = data_config["n_users"]
         self.n_items = data_config["n_items"]
@@ -33,23 +33,31 @@ class Trainer(object):
         self.beta = args.beta # 0.3
         self.gamma = 1.0
         self.delta = 1.0
-        self.omega = 0.5
+        self.omega = args.omega
+
+        self.learn_alpha = args.learn_alpha
+        self.learn_beta = args.learn_beta
+        self.learn_gamma = args.learn_gamma
+        self.learn_delta = args.learn_delta
 
         ### our code ###
-        if use_alpha:
+        if self.learn_alpha:
             self.alpha = nn.Parameter(torch.tensor(self.alpha))  # Learnable alpha
-        if use_beta:
+        if self.learn_beta:
             self.beta = nn.Parameter(torch.tensor(self.beta))  # Learnable beta
-        if use_gamma:
+        if self.learn_gamma:
             self.gamma = nn.Parameter(torch.tensor(self.gamma))  # Learnable gamma
-        if use_delta:
+        if self.learn_delta:
             self.delta = nn.Parameter(torch.tensor(self.delta))  # Learnable delta
-        if use_omega:
-            self.omega = nn.Parameter(torch.tensor(self.omega))  # Learnable omega
+        # if use_omega:
+        #     self.omega = nn.Parameter(torch.tensor(self.omega))  # Learnable omega
 
 
         ### our code ###
-        self.user_transform = nn.Linear(128, 5028)  # to match the attention size with the user size 128->5028
+        if args.dataset == "WomenClothing":
+            self.user_transform = nn.Linear(128, 14596)
+        else:
+            self.user_transform = nn.Linear(128, 5028)  # to match the attention size with the user size 128->5028
 
 
         self.dataset = args.dataset
@@ -170,7 +178,7 @@ class Trainer(object):
                 emb_loss,
                 reg_loss,
             )
-            #print(perf_str)
+            print(perf_str)
 
             if epoch % args.verbose != 0:
                 continue
@@ -204,15 +212,16 @@ class Trainer(object):
                         ret["ndcg"][-1],
                     )
                 )
-                # print(perf_str)
+                print(perf_str)
 
             if ret["recall"][1] > best_recall:
                 best_recall = ret["recall"][1]
                 stopping_step = 0
 
                 model_dir = "./models"
-                model_path = os.path.join(model_dir, f"{self.dataset}_{self.model_name}")
-
+                model_filename = f"{self.dataset}_{self.model_name}_alpha_{self.learn_alpha}_beta_{self.learn_beta}_gamma_{self.learn_gamma}_delta_{self.learn_delta}_omega_{self.omega}.pth"
+                #model_path = os.path.join(model_dir, f"{self.dataset}_{self.model_name}")
+                model_path = os.path.join(model_dir, model_filename)
                 try:
                     torch.save({self.model_name: self.model.state_dict()}, model_path)
                 except FileNotFoundError:
@@ -246,10 +255,12 @@ class Trainer(object):
             self.omega,
             self.user_transform,
         )
-
+        load_path = os.path.join(model_dir,
+                                 f"{self.dataset}_{self.model_name}_alpha_{self.learn_alpha}_beta_{self.learn_beta}_gamma_{self.learn_gamma}_delta_{self.learn_delta}_omega_{self.omega}.pth")
         self.model.load_state_dict(
             torch.load(
-                "./models/" + self.dataset + "_" + self.model_name,
+                #"./models/" + self.dataset + "_" + self.model_name,
+                load_path,
                 map_location=torch.device("cpu"),
             )[self.model_name]
         )
@@ -272,21 +283,17 @@ def set_seed(seed):
 
 
 if __name__ == "__main__":
-    for A in [False]:  # use alpha
-        for B in [False]:  # use beta
-            for C in [True, False]:  # use gamma
-                for D in [True, False]:  # use delta
-                    for E in [True, False]:  # use omega
-                        args = parse_args(True)
-                        set_seed(args.seed)
 
-                        config = dict()
-                        config["n_users"] = data_generator.n_users
-                        config["n_items"] = data_generator.n_items
+      args = parse_args(True)
+      set_seed(args.seed)
 
-                        nonzero_idx = data_generator.nonzero_idx()
-                        config["nonzero_idx"] = nonzero_idx
+      config = dict()
+      config["n_users"] = data_generator.n_users
+      config["n_items"] = data_generator.n_items
 
-                        print(f"Starting run with Alpha {A}, Beta {B}, Gamma {C}, Delta {D}")
-                        trainer = Trainer(config, args,A,B,C,D,E)
-                        trainer.train()
+      nonzero_idx = data_generator.nonzero_idx()
+      config["nonzero_idx"] = nonzero_idx
+
+      print(f"Starting run with Alpha {args.learn_alpha}, Beta {args.learn_beta}, Gamma {args.learn_gamma}, Delta {args.learn_delta}, Omega {args.omega}")
+      trainer = Trainer(config, args)
+      trainer.train()
