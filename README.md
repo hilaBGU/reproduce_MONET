@@ -102,13 +102,13 @@ We evaluated our modifications on the **MenClothing** and **WomenClothing** data
 ### **WomenClothing Dataset**
 | Model             | Precision@20 | Recall@20  | NDCG@20    |
 |------------------|--------------|------------|------------|
-| Original MONET  | 0.005001     | 0.0988     | 0.0450     |
+| Original MONET  | 0.0050     | 0.0990     | 0.0450     |
 | **Enhanced-MONET** | **0.005005** | **0.0998** | **0.0457** |
 
 ### **MenClothing Dataset**
 | Model             | Precision@20 | Recall@20  | NDCG@20    |
 |------------------|--------------|------------|------------|
-| Original MONET  | 0.0045       | 0.090      | 0.0369     |
+| Original MONET  | 0.0045       | 0.0895      | 0.0406     |
 | **Enhanced-MONET** | **0.0047**   | **0.094** | **0.0413** |
 
 Our modifications demonstrate a **consistent improvement** across all key evaluation metrics.  
